@@ -1,20 +1,34 @@
 language: rust
 sudo: required
 rust:
-  - beta
+  # - beta
+  # - beta-gnu
   - stable
+  - stable-gnu
 os:
-  - linux
-  - osx
+  # - linux
+  # - osx
+  - windows
+filter_secrets: false
 env:
   matrix:
-    - CI_BUILD_FEATURES="bundled"
+    # - CI_BUILD_FEATURES="bundled"
     - CI_BUILD_FEATURES="gfx image ttf mixer"
   global:
     - RUST_TEST_THREADS=1
     - TRAVIS_CARGO_NIGHTLY_FEATURE=""
     - LD_LIBRARY_PATH: "/usr/local/lib"
     - secure: MJhmVnQ2IM7+sVmc3vU4ndKOcQgLLeHUPW3qaQBQHKQmvoswCwQK60N17uSgWn1Ln8teqvSRHq4KclIjdMHI+VuQXJHQKHDgjcYbHxwmc3AM1Whnp0XB44ksKUmD109BGWSfZQxzF+6dA+YNOQ+mti+bpydMu8n2FMVjA/SXwQ8=
+matrix:
+  exclude:
+    - os: linux
+      rust: stable-gnu
+    - os: linux
+      rust: beta-gnu
+    - os: osx
+      rust: stable-gnu
+    - os: osx
+      rust: beta-gnu
 
 install:
   - |
@@ -29,6 +43,7 @@ install:
 before_script:
   - shopt -s expand_aliases
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then alias pip=pip2; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install python2; curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py; python2 get-pip.py; alias pip="python2 -m pip"; fi
   - |
     pip install 'travis-cargo<0.2' --user &&
     export PATH=$HOME/.local/bin:$PATH &&
