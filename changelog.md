@@ -5,6 +5,10 @@ when upgrading from a version of rust-sdl2 to another.
 
 * Rollback PR #1081: Broke dynamic linking on Windows #1088
 
+### v0.35.0
+
+[PR #1058](https://github.com/Rust-SDL2/rust-sdl2/pull/1058): deprecate direct field access in `RendererInfo`
+
 ### v0.34.4
 
 [PR #1086](https://github.com/Rust-SDL2/rust-sdl2/pull/1086) Update bundled to use SDL2 2.0.14
