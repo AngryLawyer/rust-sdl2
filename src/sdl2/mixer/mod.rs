@@ -156,7 +156,7 @@ pub fn init(flags: InitFlag) -> Result<Sdl2MixerContext, String> {
     } else {
         // Flags not matching won't always set the error message text
         // according to sdl docs
-        if get_error() == "" {
+        if get_error().is_empty() {
             let un_init_flags = return_flags ^ flags;
             let error_str = &("Could not init: ".to_string() + &un_init_flags.to_string());
             let _ = ::set_error(error_str);
@@ -274,10 +274,7 @@ impl Chunk {
         if raw.is_null() {
             Err(get_error())
         } else {
-            Ok(Chunk {
-                raw: raw,
-                owned: true,
-            })
+            Ok(Chunk { raw, owned: true })
         }
     }
 
@@ -307,10 +304,7 @@ impl<'a> LoaderRWops<'a> for RWops<'a> {
         if raw.is_null() {
             Err(get_error())
         } else {
-            Ok(Chunk {
-                raw: raw,
-                owned: true,
-            })
+            Ok(Chunk { raw, owned: true })
         }
     }
 
@@ -321,7 +315,7 @@ impl<'a> LoaderRWops<'a> for RWops<'a> {
             Err(get_error())
         } else {
             Ok(Music {
-                raw: raw,
+                raw,
                 owned: true,
                 _marker: PhantomData,
             })
@@ -349,21 +343,21 @@ pub fn allocate_channels(numchans: i32) -> i32 {
     unsafe { mixer::Mix_AllocateChannels(numchans as c_int) as i32 }
 }
 
-static mut CHANNEL_FINISHED_CALLBACK: Option<fn(Channel)> = None;
+static mut CHANNEL_FINISHED_CALLBACK: Option<Box<dyn Fn(Channel) + 'static>> = None;
 
 extern "C" fn c_channel_finished_callback(ch: c_int) {
     unsafe {
         match CHANNEL_FINISHED_CALLBACK {
             None => (),
-            Some(cb) => cb(Channel(ch as i32)),
+            Some(ref cb) => cb(Channel(ch as i32)),
         }
     }
 }
 
 /// When channel playback is halted, then the specified `channel_finished` function is called.
-pub fn set_channel_finished(f: fn(Channel)) {
+pub fn set_channel_finished(f: impl Fn(Channel) + 'static) {
     unsafe {
-        CHANNEL_FINISHED_CALLBACK = Some(f);
+        CHANNEL_FINISHED_CALLBACK = Some(Box::new(f));
         mixer::Mix_ChannelFinished(Some(
             c_channel_finished_callback as extern "C" fn(ch: c_int),
         ));
@@ -503,7 +497,8 @@ impl Channel {
         match ret {
             mixer::Mix_Fading_MIX_FADING_OUT => Fading::FadingOut,
             mixer::Mix_Fading_MIX_FADING_IN => Fading::FadingIn,
-            mixer::Mix_Fading_MIX_NO_FADING | _ => Fading::NoFading,
+            mixer::Mix_Fading_MIX_NO_FADING => Fading::NoFading,
+            _ => Fading::NoFading,
         }
     }
 
@@ -514,10 +509,7 @@ impl Channel {
         if raw.is_null() {
             None
         } else {
-            Some(Chunk {
-                raw: raw,
-                owned: false,
-            })
+            Some(Chunk { raw, owned: false })
         }
     }
 
@@ -791,7 +783,7 @@ impl<'a> Music<'a> {
             Err(get_error())
         } else {
             Ok(Music {
-                raw: raw,
+                raw,
                 owned: true,
                 _marker: PhantomData,
             })
@@ -813,7 +805,7 @@ impl<'a> Music<'a> {
             Err(get_error())
         } else {
             Ok(Music {
-                raw: raw,
+                raw,
                 owned: true,
                 _marker: PhantomData,
             })
@@ -833,7 +825,8 @@ impl<'a> Music<'a> {
             mixer::Mix_MusicType_MUS_MP3_MAD_UNUSED => MusicType::MusicMp3Mad,
             mixer::Mix_MusicType_MUS_FLAC => MusicType::MusicFlac,
             mixer::Mix_MusicType_MUS_MODPLUG_UNUSED => MusicType::MusicModPlug,
-            mixer::Mix_MusicType_MUS_NONE | _ => MusicType::MusicNone,
+            mixer::Mix_MusicType_MUS_NONE => MusicType::MusicNone,
+            _ => MusicType::MusicNone,
         }
     }
 
@@ -990,7 +983,8 @@ impl<'a> Music<'a> {
         match ret {
             mixer::Mix_Fading_MIX_FADING_OUT => Fading::FadingOut,
             mixer::Mix_Fading_MIX_FADING_IN => Fading::FadingIn,
-            mixer::Mix_Fading_MIX_NO_FADING | _ => Fading::NoFading,
+            mixer::Mix_Fading_MIX_NO_FADING => Fading::NoFading,
+            _ => Fading::NoFading,
         }
     }
 }
